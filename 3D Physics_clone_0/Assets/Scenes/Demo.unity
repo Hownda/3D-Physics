@@ -367,7 +367,8 @@ MonoBehaviour:
   NetworkConfig:
     ProtocolVersion: 0
     NetworkTransport: {fileID: 280980037}
-    PlayerPrefab: {fileID: 0}
+    PlayerPrefab: {fileID: 1113504008060925791, guid: c62b2f3e4189ab74281b831cf3b1ddb9,
+      type: 3}
     NetworkPrefabs: []
     TickRate: 30
     ClientConnectionBufferTimeout: 10
@@ -1335,6 +1336,7 @@ GameObject:
   - component: {fileID: 1180465152}
   - component: {fileID: 1180465151}
   - component: {fileID: 1180465150}
+  - component: {fileID: 1180465153}
   m_Layer: 0
   m_Name: Floor
   m_TagString: Untagged
@@ -1407,6 +1409,19 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &1180465153
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1180465149}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 10, y: 0.85, z: 10}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &1587979931
 GameObject:
   m_ObjectHideFlags: 0

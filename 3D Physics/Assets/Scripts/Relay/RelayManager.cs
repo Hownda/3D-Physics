@@ -60,6 +60,7 @@ public class RelayManager : MonoBehaviour
                 );
 
             NetworkManager.Singleton.StartHost();
+            Debug.Log(await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId));
             networkPanel.SetActive(false);
         }
         catch (RelayServiceException e)
