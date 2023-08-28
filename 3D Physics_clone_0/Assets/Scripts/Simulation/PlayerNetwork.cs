@@ -1,104 +1,162 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
-using System.Threading;
-using UnityEngine.UI;
 using System.Linq;
-using UnityEngine.Rendering;
+using UnityEngine.InputSystem;
 
 public class PlayerNetwork : NetworkBehaviour
 {
     private Vector2 moveInput;
     private MovementControls inputActions;
+    private PhysicsObject physicsObject;
 
-    private int tick = 0;
+    private float tickDeltaTime = 0;
     private const int buffer = 1024;
-    const ushort MAX_FRAME_BUFFER = 8;
-    private GameState current;
-    private Dictionary<int, GameState> GameStateDict = new();
+    private const float tickRate = 1f / 60f;
+    private int tick = 0;
 
-    private HandleStates.InputState[] _inputStates = new HandleStates.InputState[buffer];
-    private HandleStates.TransformStateRW[] _transformStates = new HandleStates.TransformStateRW[buffer];
-    public NetworkVariable<HandleStates.TransformStateRW> currentServerTransformState = new();
-    public HandleStates.TransformStateRW previousTransformState;
+    private NetworkVariable<TransformState> currentServerTransformState = new();
+    private InputState[] inputStates = new InputState[buffer];
+    private TransformState[] transformStates = new TransformState[buffer];
 
-    private long prev = System.DateTime.UtcNow.Ticks;
-    private long lag = 0;
-    private int test = -2;
-    private bool run = false;
-
-    private void Start()
+    public override void OnNetworkSpawn()
     {
         if (IsLocalPlayer)
         {
             inputActions = new MovementControls();
             inputActions.Player.Enable();
-            current = new GameState(moveInput, transform.position, transform.rotation, tick);
-            InitializeGameStateServerRpc(moveInput, transform.position, transform.rotation, tick);
-            run = true;
+            currentServerTransformState.OnValueChanged += OnServerStateChanged;
+            PhysicsWorld.Instance.FindPhysicsObjects();
         }
+        physicsObject = GetComponent<PhysicsObject>();
     }
 
-    readonly static long TICKS_PER_FRAME = 166667; //16.67ms for 60fps
     private void Update()
     {
         if (IsLocalPlayer)
         {
             moveInput = inputActions.Player.Movement.ReadValue<Vector2>();
-
-            if (run) //update loop
-            {
-                long now = System.DateTime.UtcNow.Ticks;
-                long elapsed = now - prev;
-                prev = now;
-                lag += elapsed;
-                while (lag >= TICKS_PER_FRAME) //lets us update many times if we lag behind
-                {
-                    test = tick;
-                    lag -= TICKS_PER_FRAME;
-                    //handle rollbacks
-                    //if (RollbackFrames.Count > 0) current = HandleRollbacks();
-                    //get inputs for this frame
-                    //FrameInputDictionary.TryGetValue((ushort)current.frameID, out InputSerialization.FrameInfo frameInputs);
-                    //predict remote inputs
-                    //PredictRemoteInputs(current.tick - LastRemoteFrame);
-                    //store gamestate in buffer
-                    GameStateDict[current.tick] = new GameState(current);
-                    //update gamestate
-                    MovePlayerWithServerTickServerRpc(current.tick, moveInput);
-                    ProcessLocalPlayerMovement(moveInput);
-                    current = current.Tick(moveInput, transform.position, transform.rotation);
-                    //cleanup
-                    ushort earliestBufferedFrame = (ushort)(current.tick - MAX_FRAME_BUFFER);
-                    GameStateDict.Remove(earliestBufferedFrame);
-
-                }
-            }
-        }
-    }
-    
-    private void ProcessLocalPlayerMovement(Vector2 moveInput)
-    {
-        transform.position += new Vector3(moveInput.x, 0, moveInput.y) * 5 * TICKS_PER_FRAME / 10000000 ;
-    }
-
-    [ServerRpc] private void InitializeGameStateServerRpc(Vector2 moveInput, Vector3 position, Quaternion rotation, int tick)
-    {
-        current = new GameState(moveInput, transform.position, transform.rotation, tick);
-    }
-
-    [ServerRpc] private void MovePlayerWithServerTickServerRpc(int tick, Vector2 moveInput)
-    {
-        if (GameStateDict.ContainsKey(tick))
-        {
-            GameStateDict[current.tick] = new GameState(current);
+            ProcessLocalInput(moveInput);          
         }
         else
         {
-            GameStateDict.Add(current.tick, new GameState(current));
+            SimulateOtherPlayer();
         }
-        transform.position += new Vector3(moveInput.x, 0, moveInput.y) * 5 * TICKS_PER_FRAME / 10000000;
-        current = current.Tick(moveInput, transform.position, transform.rotation);    
+    }
+
+    public void ProcessLocalInput(Vector2 _moveInput)
+    {
+        tickDeltaTime += Time.deltaTime;
+
+        if (tickDeltaTime > tickRate)
+        {
+            int bufferIndex = tick % buffer;
+
+            if (!IsServer)
+            {
+                ApplyMovement(_moveInput);
+                //physicsObject.Step(tickRate);
+                
+            }
+            MovePlayerServerRpc(tick, _moveInput);
+
+            inputStates[bufferIndex] = new()
+            {
+                tick = tick,
+                moveInput = _moveInput,
+            };
+
+            transformStates[bufferIndex] = new()
+            {
+                tick = tick,
+                finalPosition = transform.position,
+                finalRotation = transform.rotation,
+                finalVelocity = physicsObject.velocity,
+            };
+
+            tickDeltaTime -= tickRate;
+            tick++;
+        }
+    }
+
+    [ServerRpc]
+    private void MovePlayerServerRpc(int _tick, Vector2 _moveInput)
+    {
+        ApplyMovement(_moveInput);
+
+        currentServerTransformState.Value = new()
+        {
+            tick = _tick,
+            finalPosition = transform.position,
+            finalRotation = transform.rotation,
+            finalVelocity = physicsObject.velocity,
+        };
+    }
+
+    public void SimulateOtherPlayer()
+    {
+        tickDeltaTime += Time.deltaTime;
+
+        if (tickDeltaTime > tickRate)
+        {
+            if (currentServerTransformState.Value.finalPosition != null)
+            {
+                if (!IsServer)
+                {
+                    transform.position = currentServerTransformState.Value.finalPosition;
+                    transform.rotation = currentServerTransformState.Value.finalRotation;
+                }
+            }
+
+            tickDeltaTime -= tickRate;;
+        }
+    }
+
+    private void OnServerStateChanged(TransformState previousState, TransformState newState)
+    {
+        if (!IsLocalPlayer) return;
+
+        if (!IsServer)
+        {
+            TransformState calculatedState = transformStates.First(localState => localState.tick == newState.tick);
+            if (calculatedState.finalPosition != newState.finalPosition)
+            {
+                Debug.Log("Correcting client position");
+                Debug.Log(calculatedState.finalVelocity + " : " + newState.finalVelocity);
+                TeleportPlayer(newState);
+
+                IEnumerable<InputState> inputs = inputStates.Where(input => input.tick > newState.tick);
+                inputs = from input in inputs orderby input.tick select input;
+
+                foreach (InputState inputState in inputs)
+                {
+                    ApplyMovement(inputState.moveInput);
+
+                    int bufferIndex = inputState.tick % buffer;
+                    transformStates[bufferIndex] = new TransformState()
+                    {
+                        tick = inputState.tick,
+                        finalPosition = transform.position,
+                        finalRotation = transform.rotation,
+                        finalVelocity = physicsObject.velocity,
+                    };
+                }
+            }
+        }
+    }  
+    
+    private void ApplyMovement(Vector2 _moveInput)
+    {
+        physicsObject.Step(_moveInput, tickRate);
+    }
+
+    private void TeleportPlayer(TransformState newState)
+    {
+        transform.position = newState.finalPosition;
+        transform.rotation = newState.finalRotation;
+        physicsObject.velocity = newState.finalVelocity;
+
+        int bufferIndex = newState.tick % buffer;
+        transformStates[bufferIndex] = newState;
     }
 }

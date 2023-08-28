@@ -1,11 +1,10 @@
+#if UNITY_EDITOR
 using ParrelSync;
-using System.Collections;
-using System.Collections.Generic;
+#endif
 using Unity.Services.Authentication;
 using Unity.Services.Core;
 using System.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.Rendering;
 using Unity.Services.Relay.Models;
 using Unity.Services.Relay;
 using Unity.Netcode.Transports.UTP;
