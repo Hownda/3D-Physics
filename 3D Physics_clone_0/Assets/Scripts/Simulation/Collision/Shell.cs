@@ -4,24 +4,22 @@ using UnityEngine;
 
 public class Shell : MonoBehaviour
 {
-    public Transform shell;
-
-    private void Awake()
-    {
-        shell = Instantiate(new GameObject("Empty"), transform).transform;
-    }
-
-    public virtual bool TestCollision(Transform otherTransform, Shell otherShell, Transform otherShellTransform)
+    public virtual bool TestCollision(Transform otherTransform, Shell otherShell)
     {
         return new bool();
     }
 
-    public virtual bool TestCollision(Transform otherTransform, SphereShell otherShell, Transform otherShellTransform)
+    public virtual bool TestCollision(Transform otherTransform, SphereShell otherShell)
     {
         return new bool();
     }
 
-    public virtual bool TestCollision(Transform otherTransform, PlaneShell otherShell, Transform otherShellTransform)
+    public virtual bool TestCollision(Transform otherTransform, PlaneShell otherShell)
+    {
+        return new bool();
+    }
+
+    public virtual bool TestCollision(Transform otherTransform, CapsuleShell otherShell)
     {
         return new bool();
     }

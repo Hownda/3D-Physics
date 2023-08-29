@@ -25,10 +25,27 @@ public class PhysicsObject : MonoBehaviour
         transform.position += roundedVelocity;
 
         force = Vector3.zero;
+
+        DetectCollisions();
     }
 
     private float RoundValue(float value)
     {
         return Mathf.Round(value * 1000) / 1000;
     }
+
+    private void DetectCollisions()
+    {
+        for (int i = 0; i < PhysicsWorld.Instance.physicsObjects.Count ; i++)
+        {
+            PhysicsObject otherObject = PhysicsWorld.Instance.physicsObjects[i];
+            if (otherObject != this)
+            {
+                if (GetComponent<Shell>().TestCollision(otherObject.transform, otherObject.GetComponent<Shell>()))
+                {
+                    
+                }
+            }
+        }
+    }   
 }

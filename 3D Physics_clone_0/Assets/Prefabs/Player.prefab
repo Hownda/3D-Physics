@@ -11,10 +11,11 @@ GameObject:
   - component: {fileID: 1113504008060925776}
   - component: {fileID: 1113504008060925779}
   - component: {fileID: 1113504008060925778}
-  - component: {fileID: 1113504008060925789}
   - component: {fileID: 1113504008060925788}
   - component: {fileID: 7406639681409303132}
   - component: {fileID: -7410351222942951188}
+  - component: {fileID: 1787213361167584008}
+  - component: {fileID: 1244378825474040446}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -87,20 +88,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!136 &1113504008060925789
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1113504008060925791}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  m_Radius: 0.5
-  m_Height: 2
-  m_Direction: 1
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &1113504008060925788
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -143,5 +130,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mass: 1
   velocity: {x: 0, y: 0, z: 0}
-  angularVelocity: {x: 0, y: 0, z: 0}
   force: {x: 0, y: 0, z: 0}
+--- !u!114 &1787213361167584008
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1113504008060925791}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bcfc6ab0bc2ad16419e2425f2d4e336a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  end: {x: 0, y: 2, z: 0}
+  radius: 0.5
+--- !u!136 &1244378825474040446
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1113504008060925791}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  m_Radius: 0.5
+  m_Height: 2
+  m_Direction: 1
+  m_Center: {x: 0, y: 0, z: 0}

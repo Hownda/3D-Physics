@@ -7,23 +7,18 @@ public class PlaneShell : Shell
     public Vector3 plane;
     public float Distance;
 
-    private void Start()
+    public override bool TestCollision(Transform otherTransform, Shell otherShell)
     {
-        shell.position = plane;
+        return base.TestCollision(otherTransform, otherShell);
     }
 
-    public override bool TestCollision(Transform otherTransform, Shell otherShell, Transform otherShellTransform)
+    public override bool TestCollision(Transform otherTransform, SphereShell otherShell)
     {
-        return base.TestCollision(otherTransform, otherShell, otherShellTransform);
+        return base.TestCollision(otherTransform, otherShell);
     }
 
-    public override bool TestCollision(Transform otherTransform, SphereShell otherShell, Transform otherShellTransform)
+    public override bool TestCollision(Transform otherTransform, PlaneShell otherShell)
     {
-        return base.TestCollision(otherTransform, otherShell, otherShellTransform);
-    }
-
-    public override bool TestCollision(Transform otherTransform, PlaneShell otherShell, Transform otherShellTransform)
-    {
-        return base.TestCollision(otherTransform, otherShell, otherShellTransform);
+        return base.TestCollision(otherTransform, otherShell);
     }
 }
