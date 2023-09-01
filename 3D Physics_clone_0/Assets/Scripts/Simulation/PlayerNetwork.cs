@@ -3,12 +3,14 @@ using UnityEngine;
 using Unity.Netcode;
 using System.Linq;
 using UnityEngine.InputSystem;
+using Unity.VisualScripting;
 
 public class PlayerNetwork : NetworkBehaviour
 {
     private Vector2 moveInput;
     private MovementControls inputActions;
     private PhysicsObject physicsObject;
+    private float movementSpeed = 5;
 
     private float tickDeltaTime = 0;
     private const int buffer = 1024;
@@ -28,6 +30,7 @@ public class PlayerNetwork : NetworkBehaviour
             currentServerTransformState.OnValueChanged += OnServerStateChanged;
             PhysicsWorld.Instance.FindPhysicsObjects();
         }
+        
         physicsObject = GetComponent<PhysicsObject>();
     }
 
@@ -55,7 +58,6 @@ public class PlayerNetwork : NetworkBehaviour
             if (!IsServer)
             {
                 ApplyMovement(_moveInput);
-                //physicsObject.Step(tickRate);
                 
             }
             MovePlayerServerRpc(tick, _moveInput);
@@ -91,7 +93,7 @@ public class PlayerNetwork : NetworkBehaviour
             finalRotation = transform.rotation,
             finalVelocity = physicsObject.velocity,
         };
-    }
+    }    
 
     public void SimulateOtherPlayer()
     {
@@ -103,12 +105,13 @@ public class PlayerNetwork : NetworkBehaviour
             {
                 if (!IsServer)
                 {
-                    transform.position = currentServerTransformState.Value.finalPosition;
+                    transform.position = Vector3.Lerp(transform.position, currentServerTransformState.Value.finalPosition, 0.5f);
                     transform.rotation = currentServerTransformState.Value.finalRotation;
                 }
             }
 
             tickDeltaTime -= tickRate;;
+            tick++;
         }
     }
 
@@ -147,7 +150,8 @@ public class PlayerNetwork : NetworkBehaviour
     
     private void ApplyMovement(Vector2 _moveInput)
     {
-        physicsObject.Step(_moveInput, tickRate);
+        physicsObject.AddForce(new Vector3(_moveInput.x * physicsObject.mass * movementSpeed, 0, _moveInput.y * physicsObject.mass * movementSpeed));
+        physicsObject.Step(tickRate);
     }
 
     private void TeleportPlayer(TransformState newState)
